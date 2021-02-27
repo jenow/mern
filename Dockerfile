@@ -7,10 +7,8 @@ COPY client/package*.json ./
 RUN npm install
 
 COPY client/ ./
-RUN ls
 
 RUN npm run build
-
 
 FROM node:14.15.3-alpine3.12
 
