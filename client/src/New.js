@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, Button, Row, Col, Image, Form } from "react-bootstrap";
+import { Card, Button, Col, Form, Toast } from "react-bootstrap";
 import { useHistory } from "react-router-dom";
 import { LinkContainer } from "react-router-bootstrap";
 import axios from "axios";
@@ -15,18 +15,17 @@ function New() {
   const [hookHand, setHookHand] = useState(true);
   const [catchPhrase, setCatchPrase] = useState("");
   const [captainExists, setCaptainExists] = useState(false);
+  const [showToast, setShowToast] = useState(false);
+  const [globalError, setGlobalError] = useState("");
+  const [nameIsInvalid, setNameIsInvalid] = useState(false);
+  const [treasureIsInvalid, setTreasureIsInvalid] = useState(false);
+  const [imageUrlIsInvalid, setImageUrlIsInvalid] = useState(false);
+  const [catchPhraseIsInvalid, setCatchPhraseIsInvalid] = useState(false);
+
   const history = useHistory();
 
   function handleSubmit(event) {
     event.preventDefault();
-    console.log(name);
-    console.log(position);
-    console.log(imageUrl);
-    console.log(nbTreasureChest);
-    console.log(pegLeg);
-    console.log(eyePatch);
-    console.log(hookHand);
-    console.log(catchPhrase);
     axios
       .post("/pirates", {
         name,
@@ -39,11 +38,34 @@ function New() {
         catchPhrase,
       })
       .then((res) => {
-        history.push("/");
+        history.push(`/pirate/${res.data.data._id}`);
       })
       .catch((err) => {
         if (err.response.data.error) {
-          setCaptainExists(true);
+          setGlobalError(err.response.data.errors[0].param);
+          setShowToast(true);
+        } else {
+          for (const error of err.response.data.errors) {
+            switch (error.param) {
+              case "name":
+                setNameIsInvalid(true);
+                break;
+              case "position":
+                setCaptainExists(true);
+                break;
+              case "nbTreasureChest":
+                setTreasureIsInvalid(true);
+                break;
+              case "imageUrl":
+                setImageUrlIsInvalid(true);
+                break;
+              case "catchPhrase":
+                setCatchPhraseIsInvalid(true);
+                break;
+              default:
+                break;
+            }
+          }
         }
       });
   }
@@ -51,6 +73,24 @@ function New() {
   return (
     <div>
       <div className="New">
+        <Toast
+          style={{
+            position: "absolute",
+            top: 20,
+            right: 20,
+            zIndex: 99,
+            backgroundColor: "#fc4503",
+          }}
+          onClose={() => setShowToast(false)}
+          show={showToast}
+          delay={2000}
+          autohide
+        >
+          <Toast.Header>
+            <strong className="mr-auto">Error</strong>
+          </Toast.Header>
+          <Toast.Body>{globalError}</Toast.Body>
+        </Toast>
         <Card>
           <Card.Header>
             <h1 className="header">
@@ -70,8 +110,14 @@ function New() {
                       type="text"
                       placeholder="Pirate Name"
                       onChange={(e) => setName(e.target.value)}
+                      isInvalid={nameIsInvalid}
                       required
                     />
+                    {nameIsInvalid && (
+                      <div className="fieldError">
+                        Enter a name
+                      </div>
+                    )}
                   </Form.Group>
                 </Col>
 
@@ -91,7 +137,11 @@ function New() {
                       <option>Boatswain</option>
                       <option>Powder Monkey</option>
                     </Form.Control>
-                    { captainExists && <div className="fieldError">Arrrr, a Captain is already there!</div>}
+                    {captainExists && (
+                      <div className="fieldError">
+                        Arrrr, a Captain is already there!
+                      </div>
+                    )}
                   </Form.Group>
                 </Col>
               </Form.Row>
@@ -104,14 +154,20 @@ function New() {
                       type="text"
                       placeholder="Image Url"
                       onChange={(e) => setImageUrl(e.target.value)}
+                      isInvalid={imageUrlIsInvalid}
                       required
                     />
+                    {imageUrlIsInvalid && (
+                      <div className="fieldError">
+                        Set a picture URL
+                      </div>
+                    )}
                   </Form.Group>
                 </Col>
               </Form.Row>
 
               <Form.Row>
-              <Col xs={6}>
+                <Col xs={6}>
                   <Form.Group as={Col} controlId="nbTreasureChest">
                     <Form.Label># Treasure Chest</Form.Label>
                     <Form.Control
@@ -119,8 +175,14 @@ function New() {
                       value={nbTreasureChest}
                       min="0"
                       onChange={(e) => setNbTreasureChest(e.target.value)}
+                      isInvalid={treasureIsInvalid}
                       required
                     />
+                    {treasureIsInvalid && (
+                      <div className="fieldError">
+                        Set a number of treasure greater than 0
+                      </div>
+                    )}
                   </Form.Group>
                 </Col>
 
@@ -156,15 +218,21 @@ function New() {
               </Form.Row>
 
               <Form.Row>
-              <Col xs={6}>
+                <Col xs={6}>
                   <Form.Group as={Col} controlId="catchPhrase">
                     <Form.Label>Catch Phrase</Form.Label>
                     <Form.Control
                       as="textarea"
                       placeholder="Catch Phrase"
                       onChange={(e) => setCatchPrase(e.target.value)}
+                      isInvalid={catchPhraseIsInvalid}
                       required
                     />
+                    {catchPhraseIsInvalid && (
+                      <div className="fieldError">
+                        Set a catch phrase
+                      </div>
+                    )}
                   </Form.Group>
                 </Col>
 

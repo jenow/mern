@@ -1,21 +1,23 @@
 import React, { useEffect, useState } from "react";
 import "./Home.css";
 import axios from "axios";
-import { Card, Button, Row, Col, Image } from "react-bootstrap";
+import { Card, Button, Row, Col, Image, Toast } from "react-bootstrap";
 import { LinkContainer } from "react-router-bootstrap";
 
 function Home() {
   const [pirates, setPirates] = useState([]);
+  const [showToast, setShowToast] = useState(false);
+  const [globalError, setGlobalError] = useState("");
 
   function getPirates() {
     axios
       .get("/pirates")
       .then((res) => {
-        console.log(res.data.data);
         setPirates(res.data.data);
       })
       .catch((err) => {
-        console.error(err);
+        setGlobalError(err.response.data.error);
+        setShowToast(true);
       });
   }
 
@@ -30,12 +32,31 @@ function Home() {
         getPirates();
       })
       .catch((err) => {
-        console.error(err);
+        setGlobalError(err.response.data.error);
+        setShowToast(true);
       });
   }
 
   return (
     <div className="Home">
+      <Toast
+        style={{
+          position: "absolute",
+          top: 20,
+          right: 20,
+          zIndex: 99,
+          backgroundColor: '#fc4503'
+        }}
+        onClose={() => setShowToast(false)}
+        show={showToast}
+        delay={2000}
+        autohide
+      >
+        <Toast.Header>
+          <strong className="mr-auto">Error</strong>
+        </Toast.Header>
+        <Toast.Body>{globalError}</Toast.Body>
+      </Toast>
       <Card>
         <Card.Header>
           <h1 className="header">
@@ -47,7 +68,7 @@ function Home() {
         </Card.Header>
         <Card.Body>
           {pirates.map((pirate) => (
-            <Card body>
+            <Card body key={pirate._id}>
               <Row>
                 <Col xs={12} className="align-center">
                   <h4>{pirate.name}</h4>
